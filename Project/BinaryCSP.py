@@ -79,7 +79,7 @@ class NotEqualConstraint(BinaryConstraint):
 		return True
 
 	def __repr__(self):
-	    return 'NotEqualConstraint (%s, %s)' % (str(self.var1), str(self.var2))
+		return 'NotEqualConstraint (%s, %s)' % (str(self.var1), str(self.var2))
 
 
 class ConstraintSatisfactionProblem:
@@ -102,10 +102,10 @@ class ConstraintSatisfactionProblem:
 		self.unaryConstraints = unaryConstraints
 
 	def __repr__(self):
-	    return '---Variable Domains\n%s---Binary Constraints\n%s---Unary Constraints\n%s' % ( \
-	        ''.join([str(e) + ':' + str(self.varDomains[e]) + '\n' for e in self.varDomains]), \
-	        ''.join([str(e) + '\n' for e in self.binaryConstraints]), \
-	        ''.join([str(e) + '\n' for e in self.binaryConstraints]))
+		return '---Variable Domains\n%s---Binary Constraints\n%s---Unary Constraints\n%s' % ( \
+			''.join([str(e) + ':' + str(self.varDomains[e]) + '\n' for e in self.varDomains]), \
+			''.join([str(e) + '\n' for e in self.binaryConstraints]), \
+			''.join([str(e) + '\n' for e in self.binaryConstraints]))
 
 
 class Assignment:
@@ -161,9 +161,9 @@ class Assignment:
 		return self.assignedValues
 
 	def __repr__(self):
-	    return '---Variable Domains\n%s---Assigned Values\n%s' % ( \
-	        ''.join([str(e) + ':' + str(self.varDomains[e]) + '\n' for e in self.varDomains]), \
-	        ''.join([str(e) + ':' + str(self.assignedValues[e]) + '\n' for e in self.assignedValues]))
+		return '---Variable Domains\n%s---Assigned Values\n%s' % ( \
+			''.join([str(e) + ':' + str(self.varDomains[e]) + '\n' for e in self.varDomains]), \
+			''.join([str(e) + ':' + str(self.assignedValues[e]) + '\n' for e in self.assignedValues]))
 
 
 
@@ -185,9 +185,11 @@ class Assignment:
 		True if the value would be consistent with all currently assigned values, False otherwise
 """
 def consistent(assignment, csp, var, value):
- 	"""Question 1"""
+	"""Question 1"""
 	"""YOUR CODE HERE"""
-
+	for cst in csp.binaryConstraints:
+		if cst.affects(var) and (value == assignment.assignedValues[cst.otherVariable(var)]):
+			return False
 	return True
 
 
@@ -233,8 +235,8 @@ def eliminateUnaryConstraints(assignment, csp):
 			for value in (v for v in list(domains[var]) if not constraint.isSatisfied(v)):
 				domains[var].remove(value)
 				if len(domains[var]) == 0:
-				 	# Failure due to invalid assignment
-				 	return None
+					# Failure due to invalid assignment
+					return None
 	return assignment
 
 
