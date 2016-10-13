@@ -214,8 +214,27 @@ def consistent(assignment, csp, var, value):
 """
 def recursiveBacktracking(assignment, csp, orderValuesMethod, selectVariableMethod):
 	"""Question 1"""
+
 	"""YOUR CODE HERE"""
-	return None
+
+	#if assigment is complete then return assignment
+	if assignment.isComplete():
+		return assignment
+	# Select unassigned variable
+	var = selectVariableMethod(assignment, csp)
+	#continue until var is empty(all variable are assigned)
+	if not var is None:
+		#for each value in O-D-V Do
+		for value in orderValuesMethod(assignment, csp, var):
+			#if value is consistent with assignment then
+			if consistent(assignment, csp, var, value):
+				#add {var = value} to assignment
+				assignment.assignedValues[var] = value
+				result = recursiveBacktracking(assignment,csp, orderValuesMethod, selectVariableMethod)
+				if not result is None:
+					return result
+				assignment.assignedValues[var] = None
+		return None
 
 
 """
@@ -264,7 +283,47 @@ def minimumRemainingValuesHeuristic(assignment, csp):
 	nextVar = None
 	domains = assignment.varDomains
 	"""Question 2"""
-	"""YOUR CODE HERE"""
+	#Choose variable with fewest legal values
+	#To break ties, choose variable with most constraints on remaining variables
+	minLegal = -1
+	listOfVars = []
+	#First look for what variable has the fewest legal values, make sure to keep track if there are ties.
+	var = domains.keys()
+	for i in range(0, len(var)):
+		#Check to see if it hasnt been assigned
+		if assignment.assignedValues[var[i]] == None:
+			#then see if its the min
+			if minLegal > len(domains[var[i]]) or minLegal < 0:
+				#initialize a list of variables with the minLegal values
+				#clear the previous list
+				listOfVars = []
+				#new minimum
+				minLegal = len(domains[var[i]])
+				#add the variable to the minimum
+				listOfVars.append(var[i])
+			elif minLegal == len(domains[var[i]]):
+				#If the length is the same (tie)
+				listOfVars.append(var[i])
+	#You finished with the first check. now check for ties
+	if (len(listOfVars) == 0):
+		return nextVar
+	elif (len(listOfVars) == 1):
+		#Theres only 1 min, no ties
+		return listOfVars[0]
+	else:
+		#theres tie's. use heuristic to break them
+		#Choose variable with most constraints on remaining variables
+		maxConstraint = 0
+		for var in listOfVars:
+			constCount = 0
+			if len(csp.binaryConstraints) == 0:
+				return listOfVars[0]
+			for const in csp.binaryConstraints:
+				if const.affects(var):
+					constCount += 1
+			if maxConstraint < constCount:
+					maxConstraint = constCount
+					nextVar = var
 
 	return nextVar
 
@@ -294,7 +353,6 @@ def leastConstrainingValuesHeuristic(assignment, csp, var):
 	values = list(assignment.varDomains[var])
 	"""Hint: Creating a helper function to count the number of constrained values might be useful"""
 	"""Question 3"""
-	"""YOUR CODE HERE"""
 
 	return values
 
