@@ -353,8 +353,23 @@ def leastConstrainingValuesHeuristic(assignment, csp, var):
 	values = list(assignment.varDomains[var])
 	"""Hint: Creating a helper function to count the number of constrained values might be useful"""
 	"""Question 3"""
-
-	return values
+	varAffected = []
+	valWithCost = []
+	#First see what variables are affected
+	for const in csp.binaryConstraints:
+		if const.affects(var):
+			varAffected.append(const.otherVariable(var))
+	for val in values:
+		constCount = 0
+		for v in varAffected:
+			if(val in list(assignment.varDomains[v])):
+				constCount += 1
+		valWithCost.append((val, constCount))
+	valWithCost = sorted(valWithCost, key=lambda tup: tup[1])
+	varAffected = []
+	for val in valWithCost:
+		varAffected.append(val[0])
+	return varAffected
 
 
 """
@@ -383,9 +398,17 @@ def noInferences(assignment, csp, var, value):
 def forwardChecking(assignment, csp, var, value):
 	inferences = set([])
 	domains = assignment.varDomains
+	varConnected = []
 	"""Question 4"""
 	"""YOUR CODE HERE"""
-
+	#value is assigned, all variables connected to the variable by a binary constraint
+	#are considered. If value in thos evariables is inconsistent with that constraint and the
+	#newly assigned value then inconistent value is removed.
+	for const in csp.binaryConstraints:
+		#check if constrainst affects variable
+		if const.affects(var) and assignment.assignedValues[const.otherVariable(var)] is None:
+			varConnected.append(const.otherVariable(var))
+	#varConnected hold all the variables that are connected by a binary constraint.
 	return inferences
 
 """
