@@ -398,17 +398,26 @@ def noInferences(assignment, csp, var, value):
 def forwardChecking(assignment, csp, var, value):
 	inferences = set([])
 	domains = assignment.varDomains
-	varConnected = []
 	"""Question 4"""
 	"""YOUR CODE HERE"""
 	#value is assigned, all variables connected to the variable by a binary constraint
 	#are considered. If value in thos evariables is inconsistent with that constraint and the
 	#newly assigned value then inconistent value is removed.
+
+	# for each unassigned variable V that is connected to X by a constraint, delete from V's domain any value that is inconsistent with the value chosen for X.
 	for const in csp.binaryConstraints:
 		#check if constrainst affects variable
 		if const.affects(var) and assignment.assignedValues[const.otherVariable(var)] is None:
-			varConnected.append(const.otherVariable(var))
-	#varConnected hold all the variables that are connected by a binary constraint.
+			varConnect = const.otherVariable(var)
+			if value in list(domains[varConnect]):
+				if len(list(domains[varConnect])) != 1:
+					#remove V from the domain
+					domains[varConnect].remove(value)
+					inferences.add((varConnect,value))
+				elif len(assignment.varDomains[varConnect]) == 1:
+					for var, val in inferences:
+						assignment.varDomains[var].add(val)
+					return None
 	return inferences
 
 """
@@ -440,7 +449,30 @@ def forwardChecking(assignment, csp, var, value):
 def recursiveBacktrackingWithInferences(assignment, csp, orderValuesMethod, selectVariableMethod, inferenceMethod):
 	"""Question 4"""
 	"""YOUR CODE HERE"""
-	return None
+	#if assigment is complete then return assignment
+	if assignment.isComplete():
+		return assignment
+	# Select unassigned variable
+	var = selectVariableMethod(assignment, csp)
+	#continue until var is empty(all variable are assigned)
+	if not var is None:
+		#for each value in O-D-V Do
+		for value in orderValuesMethod(assignment, csp, var):
+			#if value is consistent with assignment then
+			if consistent(assignment, csp, var, value):
+				#add {var = value} to assignment
+				inferences = inferenceMethod(assignment, csp, var, value)
+				if inferences is None:
+					continue
+				assignment.assignedValues[var] = value
+				result = recursiveBacktrackingWithInferences(assignment,csp, orderValuesMethod, selectVariableMethod, inferenceMethod)
+				if not result is None:
+					return result
+				else:
+					for varia, valu in inferences:
+						assignment.varDomains[varia].add(valu)
+				assignment.assignedValues[var] = None
+		return None
 
 
 
@@ -466,7 +498,28 @@ def revise(assignment, csp, var1, var2, constraint):
 	inferences = set([])
 	"""Question 5"""
 	"""YOUR CODE HERE"""
+	#returns true iff we revise the domain of var1
+	#for each x in D, do
+	#if no value y in Dj, allows(r,y) to satisfy the constraint between X and Xj, then
+	#delete x from D,
+	#revised = true
+	revised = False
+	domainV1 = list(assignment.varDomains[var1])
+	domainV2 = list(assignment.varDomains[var2])
 
+	if constraint.affects(var1) and constraint.affects(var2):
+		for val2 in domainV2:
+			revised = False
+			for val1 in domainV1:
+				revised = revised or constraint.isSatisfied(val1, val2)
+			if not revised:
+				inferences.add((var2, val2))
+				domainV1.remove(val2)
+			if len(domainV1) <= 0:
+				return None
+		for tuple in inferences:
+			assignment.varDomains[tuple[0]].remove(tuple[1])
+		return inferences
 	return inferences
 
 
@@ -486,13 +539,42 @@ def revise(assignment, csp, var1, var2, constraint):
 		set<<variable, value>>
 		the inferences made in this call or None if inconsistent assignment
 """
+#from Queue import *
 def maintainArcConsistency(assignment, csp, var, value):
 	inferences = set([])
-	"""Hint: implement revise first and use it as a helper function"""
-	"""Question 5"""
-	"""YOUR CODE HERE"""
-
+	# """Hint: implement revise first and use it as a helper function"""
+	# """Question 5"""
+	# """YOUR CODE HERE"""
+	# #local variables, a queue, queue of arcs
+	# #while queue is not empty
+	# #(Xi, Xj) removeFirst(queue)
+	# #if revise(csp, Xj) then
+	# #if size of Di=0 then return false
+	# #for each Xi in X.Neighbors do
+	# #add (Xk, Xi) to queue
+	# #return true
+	q = deque()
+	for const in csp.binaryConstraints:
+		if const.affects(var):
+			q.append(( var, const.otherVariable(var), const))
+	while len(q) != 0:
+		var, nextVar, constraint = q.pop()
+		xtraInfer = revise(assignment, csp, var, nextVar, constraint)
+		if xtraInfer is not None:
+			#then just check normal inferences
+			if len(xtraInfer) == 0:
+				continue
+			else:
+				for const in csp.binaryConstraints:
+					if const.affects(nextVar):
+						q.append((nextVar, const.otherVariable(nextVar), const))
+				inferences = inferences.union(xtraInfer)
+		else:
+			for var, val in inferences:
+				assignment.varDomains[var].add(val)
+			return None
 	return inferences
+
 
 
 """
