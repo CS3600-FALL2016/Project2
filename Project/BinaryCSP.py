@@ -506,20 +506,20 @@ def revise(assignment, csp, var1, var2, constraint):
 	revised = False
 	domainV1 = list(assignment.varDomains[var1])
 	domainV2 = list(assignment.varDomains[var2])
-
+	i = 0
 	if constraint.affects(var1) and constraint.affects(var2):
 		for val2 in domainV2:
 			revised = False
 			for val1 in domainV1:
 				revised = revised or constraint.isSatisfied(val1, val2)
 			if not revised:
+				i += 1
 				inferences.add((var2, val2))
-				domainV1.remove(val2)
-			if len(domainV1) <= 0:
+				# domainV1.remove(val2)
+			if i == len(domainV2):
 				return None
-		for tuple in inferences:
-			assignment.varDomains[tuple[0]].remove(tuple[1])
-		return inferences
+		for tup in inferences:
+			assignment.varDomains[tup[0]].remove(tup[1])
 	return inferences
 
 
@@ -562,13 +562,11 @@ def maintainArcConsistency(assignment, csp, var, value):
 		xtraInfer = revise(assignment, csp, var, nextVar, constraint)
 		if xtraInfer is not None:
 			#then just check normal inferences
-			if len(xtraInfer) == 0:
-				continue
-			else:
+			if len(xtraInfer) > 0:
+				inferences = inferences.union(xtraInfer)
 				for const in csp.binaryConstraints:
 					if const.affects(nextVar):
 						q.append((nextVar, const.otherVariable(nextVar), const))
-				inferences = inferences.union(xtraInfer)
 		else:
 			for var, val in inferences:
 				assignment.varDomains[var].add(val)
